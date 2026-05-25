@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meu Bloco de Notas</title>
+
+<style>
+:root{
+  --bg:#f4f4f4;
+  --card:#ffffff;
+  --text:darkblue;
+  --primary:#2563eb;
+  --danger:#dc2626;
+  --border:#ddd;
+}
+
+body.dark{
+  --bg:#111827;
+  --card:#1f2937;
+  --text:#f3f4f6;
+  --border:#374151;
+}
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  transition:0.3s;
+}
+
+header{
+  background:var(--primary);
+  color:white;
+  padding:18px;
+  text-align:center;
+  font-size:22px;
+  font-weight:bold;
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+
+.container{
+  max-width:900px;
+  margin:auto;
+  padding:15px;
+}
+
+.top-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+button{
+  border:none;
+  padding:10px;
+  border-radius:12px;
+  cursor:pointer;
+  font-size:15px;
+  font-weight:bold;
+}
+
+.primary{
+  background:var(--primary);
+  color:white;
+}
+
+.secondary{
+  background:#6b7280;
+  color:white;
+}
+
+.danger{
+  background:var(--danger);
+  color:white;
+}
+
+.search{
+  width:100%;
+  padding:10px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  margin-bottom:15px;
+  font-size:16px;
+}
+
+.form-card{
+  background:var(--card);
+  padding:12px;
+  border-radius:16px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom:20px;
+}
+
+input, textarea, select{
+  width:100%;
+  padding:8px;
+  margin-bottom:12px;
+  border-radius:12px;
+  border:2px solid var(--border);
+  font-size:15px;
+  background:var(--card);
+  color:var(--text);
+  font-weight:bold;
+}
+
+textarea{
+  resize:none;
+  min-height:120px;
+  line-height:1.5;
+}
+
+.notes{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+  gap:15px;
+}
+
+.note{
+  cursor:pointer;
+  background:var(--card);
+  border-radius:16px;
+  padding:12px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.1);
+  word-wrap:break-word;
+  border-left:8px solid #2563eb;
+position:relative;
+}
+
+.note h3{
+  margin-top:0;
+}
+
+.note small{
+  opacity:0.7;
+}
+
+.note-actions{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+
+.note-actions button{
+  flex:1;
+}
+
+.empty{
+  text-align:center;
+  opacity:0.7;
+  margin-top:30px;
+}
+
+.badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  background:#e5e619;
+  color:var(--primary);
+  font-size:12px;
+  margin-bottom:8px;
+  font-weight:bold;
+position:absolute;
+  top:12px;
+  right:12px;
+}
+
+@media(max-width:600px){
+  .top-actions{
+    grid-template-columns:1fr;
+  }
+}
+.note p{
+  display:-webkit-box;
+  -webkit-line-clamp:3;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  line-height:1.5;
+  transition:.2s;
+}
+.note:hover{
+  transform:translateY(-3px);
+}
+
+</style>
+</head>
+<body>
+
+<header>
+📒 Meu Bloco de Notas
+</header>
+
+<div class="container">
+
+<div class="top-actions">
+  <button class="secondary" onclick="toggleDarkMode()">
+    🌙 Alternar Tema
+  </button>
+
+  <button class="primary" onclick="exportarNotas()">
+    ⬇️ Exportar Backup
+  </button>
+</div>
+
+<input type="text" class="search" id="pesquisa" placeholder="🔍 Pesquisar notas..." onkeyup="mostrarNotas()">
+<div id="contador" style="margin-bottom:15px; opacity:.7;"></div>
+
+<div class="form-card">
+  <input type="text" id="titulo" placeholder="Título da nota">
+
+  <select id="categoria">
+    <option value="Pessoal">Pessoal</option>
+    <option value="Trabalho">Trabalho</option>
+    <option value="Estudos">Estudos</option>
+    <option value="Importante">Importante</option>
+  </select>
+
+  <textarea id="conteudo" placeholder="Digite sua nota..."></textarea>
+  <input type="file" id="imagem" accept="image/*">
+
+  <button class="primary" onclick="salvarNota()">
+    💾 Salvar Nota
+  </button>
+</div>
+
+<div class="notes" id="listaNotas"></div>
+
+<div id="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:999; padding:20px; overflow:auto;">
+  <div style="max-width:700px; margin:auto; background:var(--card); color:var(--text); padding:20px; border-radius:20px; position:relative;">
+    <button onclick="fecharModal()" style="position:absolute; right:15px; top:33px; border:none; background:var(--danger); color:white; padding:8px 12px; border-radius:10px; cursor:pointer;">
+      ✖
+    </button>
+
+    <h2 id="modalTitulo"></h2>
+    <div id="modalCategoria" class="badge"></div>
+<img id="modalImagem"
+     style="
+     width:100%;
+     border-radius:14px;
+     margin:15px 0;
+     display:none;
+">
+    <p id="modalConteudo" style="white-space:pre-wrap; line-height:1.6;"></p>
+    <small id="modalData"></small>
+  </div>
+</div>
+
+<div class="empty" id="vazio">
+  Nenhuma nota salva.
+</div>
+
+</div>
+
+<script>
+let notas = JSON.parse(localStorage.getItem('notas')) || [];
+let editando = null;
+
+function salvarLocal(){
+  localStorage.setItem('notas', JSON.stringify(notas));
+}
+
+function salvarNota(){
+
+  const titulo = document.getElementById('titulo').value.trim();
+  const categoria = document.getElementById('categoria').value;
+  const conteudo = document.getElementById('conteudo').value.trim();
+  const imagemInput = document.getElementById('imagem');
+
+  if(!titulo || !conteudo){
+    alert('Preencha o título e a nota.');
+    return;
+  }
+
+  const repetida = notas.some(n =>
+    n.titulo === titulo &&
+    n.conteudo === conteudo
+  );
+
+  if(repetida && editando === null){
+    alert('Essa nota já existe.');
+    return;
+  }
+
+  const salvar = (imagemBase64 = '') => {
+
+    const nota = {
+      titulo,
+      categoria,
+      conteudo,
+      imagem: imagemBase64,
+      data:new Date().toLocaleString('pt-BR')
+    };
+
+    if(editando !== null){
+
+      // Mantém imagem antiga se não selecionar outra
+      if(!imagemBase64 && notas[editando].imagem){
+        nota.imagem = notas[editando].imagem;
+      }
+
+      notas[editando] = nota;
+      editando = null;
+
+    }else{
+      notas.unshift(nota);
+    }
+
+    salvarLocal();
+    limparCampos();
+    mostrarNotas();
+  };
+
+  if(imagemInput.files[0]){
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+      salvar(e.target.result);
+    };
+
+    reader.readAsDataURL(imagemInput.files[0]);
+
+  }else{
+    salvar();
+  }
+}
+
+function mostrarNotas(){
+
+  const lista = document.getElementById('listaNotas');
+  const vazio = document.getElementById('vazio');
+  const pesquisa = document.getElementById('pesquisa').value.toLowerCase();
+
+  lista.innerHTML = '';
+
+  const filtradas = notas
+    .map((nota, originalIndex) => ({ nota, originalIndex }))
+    .filter(item =>
+      item.nota.titulo.toLowerCase().includes(pesquisa) ||
+      item.nota.conteudo.toLowerCase().includes(pesquisa) ||
+      item.nota.categoria.toLowerCase().includes(pesquisa)
+    );
+
+  vazio.style.display = filtradas.length ? 'none' : 'block';
+
+  document.getElementById('contador').innerText =
+    `📝 ${filtradas.length} nota(s)`;
+
+  filtradas.forEach((item)=>{
+
+    const nota = item.nota;
+    const index = item.originalIndex;
+
+    const div = document.createElement('div');
+
+    div.className = 'note';
+
+    let cor = '#2563eb';
+
+    if(nota.categoria === 'Trabalho') cor = '#059669';
+    if(nota.categoria === 'Estudos') cor = '#d97706';
+    if(nota.categoria === 'Importante') cor = '#dc2626';
+
+    div.style.borderLeftColor = cor;
+
+    div.onclick = (e) => {
+      if(e.target.tagName !== 'BUTTON'){
+        visualizarNota(index);
+      }
+    };
+
+    const textoSeguro = nota.conteudo
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\n/g, "<br>");
+
+    div.innerHTML = `
+
+      <span class="badge">${nota.categoria}</span>
+
+      <h3>${nota.titulo}</h3>
+
+      ${nota.imagem ? `
+        <img
+          src="${nota.imagem}"
+          style="
+            width:100%;
+            border-radius:12px;
+            margin:10px 0;
+            max-height:220px;
+            object-fit:cover;
+          "
+        >
+      ` : ''}
+
+      <p>${textoSeguro}</p>
+
+      <small>${nota.data}</small>
+
+      <div class="note-actions">
+
+        <button
+          class="secondary"
+          onclick="event.stopPropagation(); editarNota(${index})"
+        >
+          ✏️ Editar
+        </button>
+
+        <button
+          class="danger"
+          onclick="event.stopPropagation(); excluirNota(${index})"
+        >
+          🗑️ Excluir
+        </button>
+
+      </div>
+    `;
+
+    lista.appendChild(div);
+  });
+}
+
+function editarNota(index){
+
+  const nota = notas[index];
+
+  document.getElementById('titulo').value = nota.titulo;
+  document.getElementById('categoria').value = nota.categoria;
+  document.getElementById('conteudo').value = nota.conteudo;
+
+  editando = index;
+
+  window.scrollTo({
+    top:0,
+    behavior:'smooth'
+  });
+}
+
+function visualizarNota(index){
+
+  const nota = notas[index];
+
+  document.getElementById('modalTitulo').innerText = nota.titulo;
+
+  document.getElementById('modalCategoria').innerText =
+    nota.categoria;
+
+  const modalImagem =
+    document.getElementById('modalImagem');
+
+  if(nota.imagem){
+
+    modalImagem.src = nota.imagem;
+    modalImagem.style.display = 'block';
+
+  }else{
+    modalImagem.style.display = 'none';
+  }
+
+  document.getElementById('modalConteudo').innerText =
+    nota.conteudo;
+
+  document.getElementById('modalData').innerText =
+    nota.data;
+
+  document.getElementById('modal').style.display = 'block';
+}
+
+function fecharModal(){
+  document.getElementById('modal').style.display = 'none';
+}
+
+function excluirNota(index){
+
+  if(confirm('Deseja excluir esta nota?')){
+
+    notas.splice(index,1);
+
+    salvarLocal();
+    mostrarNotas();
+  }
+}
+
+function limparCampos(){
+
+  document.getElementById('titulo').value = '';
+  document.getElementById('conteudo').value = '';
+  document.getElementById('categoria').value = 'Pessoal';
+  document.getElementById('imagem').value = '';
+
+  localStorage.removeItem('rascunhoTitulo');
+  localStorage.removeItem('rascunhoConteudo');
+}
+
+function toggleDarkMode(){
+
+  document.body.classList.toggle('dark');
+
+  const dark =
+    document.body.classList.contains('dark');
+
+  localStorage.setItem('darkmode', dark);
+}
+
+function carregarTema(){
+
+  const dark =
+    localStorage.getItem('darkmode') === 'true';
+
+  if(dark){
+    document.body.classList.add('dark');
+  }
+}
+
+function exportarNotas(){
+
+  const blob = new Blob(
+    [JSON.stringify(notas, null, 2)],
+    {type:'application/json'}
+  );
+
+  const link = document.createElement('a');
+
+  link.href = URL.createObjectURL(blob);
+  link.download = 'backup_notas.json';
+
+  link.click();
+}
+
+function carregarRascunho(){
+
+  document.getElementById('titulo').value =
+    localStorage.getItem('rascunhoTitulo') || '';
+
+  document.getElementById('conteudo').value =
+    localStorage.getItem('rascunhoConteudo') || '';
+}
+
+function salvarRascunho(){
+
+  localStorage.setItem(
+    'rascunhoTitulo',
+    document.getElementById('titulo').value
+  );
+
+  localStorage.setItem(
+    'rascunhoConteudo',
+    document.getElementById('conteudo').value
+  );
+}
+
+window.onclick = function(e){
+
+  const modal = document.getElementById('modal');
+
+  if(e.target === modal){
+    fecharModal();
+  }
+};
+
+document.getElementById('conteudo')
+.addEventListener('keydown', function(e){
+
+  if(e.ctrlKey && e.key === 'Enter'){
+    salvarNota();
+  }
+});
+
+document.getElementById('titulo')
+.addEventListener('input', salvarRascunho);
+
+document.getElementById('conteudo')
+.addEventListener('input', salvarRascunho);
+
+carregarTema();
+carregarRascunho();
+mostrarNotas();
+</script>
+</body>
+</html>
