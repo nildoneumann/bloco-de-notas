@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meu Bloco de Notas</title>
 
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
+<link rel="apple-touch-icon" href="icon-192.png">
+
 <style>
 :root{
   --bg:#f4f4f4;
@@ -583,6 +587,18 @@ document.getElementById('conteudo')
 carregarTema();
 carregarRascunho();
 mostrarNotas();
+
+if('serviceWorker' in navigator){
+
+  window.addEventListener('load', ()=>{
+
+    navigator.serviceWorker
+      .register('./service-worker.js')
+      .then(()=> console.log('PWA ativo'));
+
+  });
+
+}
 </script>
 </body>
 </html>
