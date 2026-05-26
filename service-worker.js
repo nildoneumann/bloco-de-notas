@@ -1,4 +1,4 @@
-const CACHE = 'notas-pwa-v1';
+const CACHE = 'notas-pwa-v2';
 
 const ASSETS = [
   './',
